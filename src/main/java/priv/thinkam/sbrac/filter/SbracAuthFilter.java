@@ -104,14 +104,14 @@ class SbracAuthFilter extends OncePerRequestFilter {
         // 当前用户的角色
         List<String> currentRoleNames = this.getUsernameRoleNamesMap(request).get(currentUsername);
         // 特殊角色不校验权限
-        if (!Collections.disjoint(nonValidateRoleSet, currentRoleNames)) {
+        if (currentRoleNames != null && !Collections.disjoint(nonValidateRoleSet, currentRoleNames)) {
             return true;
         }
         List<String> permitRoles = this.getRequestRoleNamesMap(request).get(
                 this.getJoinedHttpUrlAndMethod(this.getNoContextPathRequestUrl(request), request.getMethod()));
         // todo: url支持正则表达式匹配
         // currentRoleNames和permitRoles有共同元素返回true，表示校验权限通过
-        return permitRoles != null && !Collections.disjoint(currentRoleNames, permitRoles);
+        return currentRoleNames != null && permitRoles != null && !Collections.disjoint(currentRoleNames, permitRoles);
     }
 
     @NotNull

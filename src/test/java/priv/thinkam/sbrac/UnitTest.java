@@ -1,7 +1,5 @@
 package priv.thinkam.sbrac;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,10 +51,18 @@ public class UnitTest {
                 .andExpect(content().string(containsString("login")));
         this.mockMvc.perform(post("/register")).andDo(print()).andExpect(status().isOk())
                 .andExpect(content().string(containsString("register")));
-        // 没有权限
         this.mockMvc.perform(get("/t2")).andDo(print()).andExpect(status().isOk())
                 .andExpect(content().string(containsString("t2")));
         this.mockMvc.perform(post("/t1")).andDo(print()).andExpect(status().isOk())
                 .andExpect(content().string(containsString("t1")));
+    }
+
+    @Test
+    public void test3() throws Exception {
+        // 无角色
+        SbracAuthContextImpl.username = "u3";
+        // 没有权限
+        this.mockMvc.perform(get("/t1")).andDo(print()).andExpect(status().isOk())
+                .andExpect(content().string(containsString("没有权限")));
     }
 }
