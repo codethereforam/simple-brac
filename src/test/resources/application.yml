@@ -7,3 +7,4 @@ spring:
     name: sbrac
 sbrac:
   non-validate-urls: /login,/register
+  non-validate-roles: root,admin

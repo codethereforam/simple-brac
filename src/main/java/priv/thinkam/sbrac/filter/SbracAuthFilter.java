@@ -55,10 +55,20 @@ class SbracAuthFilter extends OncePerRequestFilter {
 
     private Set<String> nonValidateUrlSet;
 
+    /**
+     * 不经过sbrac权限校验的角色
+     */
+    @Value("${sbrac.non-validate-roles}")
+    private String[] nonValidateRoles;
+
+    private Set<String> nonValidateRoleSet;
+
     @PostConstruct
     private void init() {
         nonValidateUrlSet = (nonValidateUrls.length == 0) ? new HashSet<>() : Collections.unmodifiableSet(
                 Arrays.stream(nonValidateUrls).collect(Collectors.toSet()));
+        nonValidateRoleSet = (nonValidateRoles.length == 0) ? new HashSet<>() : Collections.unmodifiableSet(
+                Arrays.stream(nonValidateRoles).collect(Collectors.toSet()));
     }
 
     private final SbracAuthFailHandler sbracAuthFailHandler;
@@ -76,6 +86,7 @@ class SbracAuthFilter extends OncePerRequestFilter {
         for (String nonValidateUrl : nonValidateUrlSet) {
             if (noContextPathRequestUrl.startsWith(nonValidateUrl)) {
                 filterChain.doFilter(request, response);
+                return;
             }
         }
         if (this.validateAuth(request)) {
@@ -88,11 +99,14 @@ class SbracAuthFilter extends OncePerRequestFilter {
     }
 
     private boolean validateAuth(HttpServletRequest request) {
-        // todo: 特殊角色不校验权限
         // 获取当前用户名
         String currentUsername = sbracAuthContext.getCurrentUsername(request);
         // 当前用户的角色
         List<String> currentRoleNames = this.getUsernameRoleNamesMap(request).get(currentUsername);
+        // 特殊角色不校验权限
+        if (!Collections.disjoint(nonValidateRoleSet, currentRoleNames)) {
+            return true;
+        }
         List<String> permitRoles = this.getRequestRoleNamesMap(request).get(
                 this.getJoinedHttpUrlAndMethod(this.getNoContextPathRequestUrl(request), request.getMethod()));
         // todo: url支持正则表达式匹配
