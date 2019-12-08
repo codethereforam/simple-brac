@@ -1,5 +1,7 @@
 package priv.thinkam.sbrac;
 
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +27,8 @@ public class UnitTest {
     private MockMvc mockMvc;
 
     @Test
-    public void shouldReturnDefaultMessage() throws Exception {
+    public void test1() throws Exception {
+        SbracAuthContextImpl.username = "u1";
         // 有权限
         this.mockMvc.perform(get("/t1")).andDo(print()).andExpect(status().isOk())
                 .andExpect(content().string(containsString("t1")));
@@ -38,5 +41,22 @@ public class UnitTest {
                 .andExpect(content().string(containsString("没有权限")));
         this.mockMvc.perform(post("/t1")).andDo(print()).andExpect(status().isOk())
                 .andExpect(content().string(containsString("没有权限")));
+    }
+
+    @Test
+    public void test2() throws Exception {
+        SbracAuthContextImpl.username = "u2";
+        // 有权限
+        this.mockMvc.perform(get("/t1")).andDo(print()).andExpect(status().isOk())
+                .andExpect(content().string(containsString("t1")));
+        this.mockMvc.perform(get("/login")).andDo(print()).andExpect(status().isOk())
+                .andExpect(content().string(containsString("login")));
+        this.mockMvc.perform(post("/register")).andDo(print()).andExpect(status().isOk())
+                .andExpect(content().string(containsString("register")));
+        // 没有权限
+        this.mockMvc.perform(get("/t2")).andDo(print()).andExpect(status().isOk())
+                .andExpect(content().string(containsString("t2")));
+        this.mockMvc.perform(post("/t1")).andDo(print()).andExpect(status().isOk())
+                .andExpect(content().string(containsString("t1")));
     }
 }

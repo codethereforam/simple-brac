@@ -17,9 +17,11 @@ import java.util.List;
  */
 @Component
 public class SbracAuthContextImpl implements SbracAuthContext {
+    public static String username = "u1";
+
     @Override
     public @NotNull String getCurrentUsername(@NotNull HttpServletRequest request) {
-        return "u1";
+        return username;
     }
 
     @Override
@@ -34,6 +36,7 @@ public class SbracAuthContextImpl implements SbracAuthContext {
     public @NotNull List<SbracUserRole> listUserRole() {
         List<SbracUserRole> sbracUserRoleList = new ArrayList<>();
         sbracUserRoleList.add(new SbracUserRole("u1", Arrays.asList("r1", "r2")));
+        sbracUserRoleList.add(new SbracUserRole("u2", Arrays.asList("r1", "root")));
         return sbracUserRoleList;
     }
 }
