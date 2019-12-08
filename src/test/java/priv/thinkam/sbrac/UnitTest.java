@@ -27,12 +27,16 @@ public class UnitTest {
     @Test
     public void shouldReturnDefaultMessage() throws Exception {
         // 有权限
-        this.mockMvc.perform(get("/test/t1")).andDo(print()).andExpect(status().isOk())
+        this.mockMvc.perform(get("/t1")).andDo(print()).andExpect(status().isOk())
                 .andExpect(content().string(containsString("t1")));
+        this.mockMvc.perform(get("/login")).andDo(print()).andExpect(status().isOk())
+                .andExpect(content().string(containsString("login")));
+        this.mockMvc.perform(post("/register")).andDo(print()).andExpect(status().isOk())
+                .andExpect(content().string(containsString("register")));
         // 没有权限
-        this.mockMvc.perform(get("/test/t2")).andDo(print()).andExpect(status().isOk())
+        this.mockMvc.perform(get("/t2")).andDo(print()).andExpect(status().isOk())
                 .andExpect(content().string(containsString("没有权限")));
-        this.mockMvc.perform(post("/test/t1")).andDo(print()).andExpect(status().isOk())
+        this.mockMvc.perform(post("/t1")).andDo(print()).andExpect(status().isOk())
                 .andExpect(content().string(containsString("没有权限")));
     }
 }

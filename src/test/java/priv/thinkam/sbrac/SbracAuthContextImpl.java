@@ -25,8 +25,8 @@ public class SbracAuthContextImpl implements SbracAuthContext {
     @Override
     public @NotNull List<SbracRequestRole> listRequestRoles() {
         List<SbracRequestRole> sbracRequestRoleList = new ArrayList<>();
-        sbracRequestRoleList.add(new SbracRequestRole("/test/t1", "GET", Arrays.asList("r1")));
-        sbracRequestRoleList.add(new SbracRequestRole("/test/t2", "GET", Arrays.asList("r3")));
+        sbracRequestRoleList.add(new SbracRequestRole("/t1", "GET", Arrays.asList("r1")));
+        sbracRequestRoleList.add(new SbracRequestRole("/t2", "GET", Arrays.asList("r3")));
         return sbracRequestRoleList;
     }
 

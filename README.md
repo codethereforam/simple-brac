@@ -16,6 +16,7 @@
 1. 配置类加EnableSbrac注解
 1. 实现SbracAuthContext接口，实现其中的方法，并注册到spring bean容器中
 1. 实现SbracAuthFailHandler处理校验失败的情况，比如返回JSON或HTML，并注册到spring bean容器中。也可以不实现，那鉴权就会返回空白页
+1. 配置文件配置"sbrac.non-validate-urls"不经过brac权限校验的url，用逗号隔开
 
 ## 开发
 修改代码后运行单元测试"UnitTest.java"

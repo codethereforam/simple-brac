@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Slf4j
 @RestController
-@RequestMapping("/test")
+@RequestMapping
 public class TestController {
 
     @GetMapping("/t1")
@@ -28,5 +28,15 @@ public class TestController {
     @GetMapping("/t2")
     public String t2() {
         return "t2";
+    }
+
+    @GetMapping("/login")
+    public String login() {
+        return "login";
+    }
+
+    @PostMapping("/register")
+    public String register() {
+        return "register";
     }
 }

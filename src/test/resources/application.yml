@@ -5,3 +5,5 @@ server:
 spring:
   application:
     name: sbrac
+sbrac:
+  non-validate-urls: /login,/register

@@ -12,15 +12,14 @@ import priv.thinkam.sbrac.core.SbracAuthFailHandler;
 import priv.thinkam.sbrac.core.SbracRequestRole;
 import priv.thinkam.sbrac.core.SbracUserRole;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +47,20 @@ class SbracAuthFilter extends OncePerRequestFilter {
     @Value("${server.servlet.context-path}")
     private String contextPath;
 
+    /**
+     * 不经过sbrac权限校验的url
+     */
+    @Value("${sbrac.non-validate-urls}")
+    private String[] nonValidateUrls;
+
+    private Set<String> nonValidateUrlSet;
+
+    @PostConstruct
+    private void init() {
+        nonValidateUrlSet = (nonValidateUrls.length == 0) ? new HashSet<>() : Collections.unmodifiableSet(
+                Arrays.stream(nonValidateUrls).collect(Collectors.toSet()));
+    }
+
     private final SbracAuthFailHandler sbracAuthFailHandler;
     private final SbracAuthContext sbracAuthContext;
 
@@ -59,6 +72,12 @@ class SbracAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull FilterChain filterChain) throws ServletException, IOException {
+        String noContextPathRequestUrl = this.getNoContextPathRequestUrl(request);
+        for (String nonValidateUrl : nonValidateUrlSet) {
+            if (noContextPathRequestUrl.startsWith(nonValidateUrl)) {
+                filterChain.doFilter(request, response);
+            }
+        }
         if (this.validateAuth(request)) {
             filterChain.doFilter(request, response);
         } else {
@@ -70,17 +89,20 @@ class SbracAuthFilter extends OncePerRequestFilter {
 
     private boolean validateAuth(HttpServletRequest request) {
         // todo: 特殊角色不校验权限
-        // todo: 特殊url不校验权限
         // 获取当前用户名
         String currentUsername = sbracAuthContext.getCurrentUsername(request);
         // 当前用户的角色
         List<String> currentRoleNames = this.getUsernameRoleNamesMap(request).get(currentUsername);
-        String url = request.getRequestURI().replaceFirst(contextPath, "");
         List<String> permitRoles = this.getRequestRoleNamesMap(request).get(
-                this.getJoinedHttpUrlAndMethod(url, request.getMethod()));
+                this.getJoinedHttpUrlAndMethod(this.getNoContextPathRequestUrl(request), request.getMethod()));
         // todo: url支持正则表达式匹配
         // currentRoleNames和permitRoles有共同元素返回true，表示校验权限通过
         return permitRoles != null && !Collections.disjoint(currentRoleNames, permitRoles);
+    }
+
+    @NotNull
+    private String getNoContextPathRequestUrl(HttpServletRequest request) {
+        return request.getRequestURI().replaceFirst(contextPath, "");
     }
 
     /**
