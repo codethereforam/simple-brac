@@ -5,7 +5,17 @@
 不校验用户名密码是否正确，只校验接口是否有权限
 
 ## 用法
-todo
+1. 引入maven依赖（本地打包或deploy到私服，maven中央仓库没有）
+    ```xml
+     <dependency>
+        <groupId>priv.thinkam</groupId>
+        <artifactId>simple-brac</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </dependency>
+    ```
+1. 配置类加EnableSbrac注解
+1. 实现SbracAuthContext接口，实现其中的方法，并注册到spring bean容器中
+1. 实现SbracAuthFailHandler处理校验失败的情况，比如返回JSON或HTML，并注册到spring bean容器中。也可以不实现，那鉴权就会返回空白页
 
 ## 开发
 修改代码后运行单元测试"UnitTest.java"
