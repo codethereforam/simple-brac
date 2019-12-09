@@ -34,13 +34,14 @@ import java.util.stream.Collectors;
 @Component
 class SbracAuthFilter extends OncePerRequestFilter {
     /**
-     * map {username: role names}在缓存中的key
+     * 缓存的{@code map {username: role names}}
      */
-    public static final String SBRAC_USERNAME_ROLE_NAMES_MAP_CACHE_KEY = "sbrac-username-role-names-map";
+    private volatile static Map<String, List<String>> usernameRoleNamesMap;
     /**
-     * map {http url + "$" + http method: role names}再缓存中的key
+     * 缓存的{@code map {http url + "$" + http method: role names}}
      */
-    public static final String SBRAC_REQUEST_ROLE_NAMES_MAP_CACHE_KEY = "sbrac-request-role-names-map";
+    private volatile static Map<String, List<String>> requestRoleNamesMap;
+
     /**
      * context path
      */
@@ -102,12 +103,12 @@ class SbracAuthFilter extends OncePerRequestFilter {
         // 获取当前用户名
         String currentUsername = sbracAuthContext.getCurrentUsername(request);
         // 当前用户的角色
-        List<String> currentRoleNames = this.getUsernameRoleNamesMap(request).get(currentUsername);
+        List<String> currentRoleNames = this.getCachedUsernameRoleNamesMap().get(currentUsername);
         // 特殊角色不校验权限
         if (currentRoleNames != null && !Collections.disjoint(nonValidateRoleSet, currentRoleNames)) {
             return true;
         }
-        List<String> permitRoles = this.getRequestRoleNamesMap(request).get(
+        List<String> permitRoles = this.getCachedRequestRoleNamesMap().get(
                 this.getJoinedHttpUrlAndMethod(this.getNoContextPathRequestUrl(request), request.getMethod()));
         // todo: url支持正则表达式匹配
         // currentRoleNames和permitRoles有共同元素返回true，表示校验权限通过
@@ -121,38 +122,39 @@ class SbracAuthFilter extends OncePerRequestFilter {
 
     /**
      * 获取{@code map {username: role names}}。先从session中获取，获取不到去调用sbracAuthContext中的方法
-     * todo: 缓存到内存还是其他地方
      *
-     * @param request request
      * @return {@code map {username: role names}}
      */
     @NotNull
-    private Map<String, List<String>> getUsernameRoleNamesMap(HttpServletRequest request) {
-        Map<String, List<String>> usernameRoleNamesMap = (Map<String, List<String>>) request.getSession()
-                .getAttribute(SBRAC_USERNAME_ROLE_NAMES_MAP_CACHE_KEY);
+    private Map<String, List<String>> getCachedUsernameRoleNamesMap() {
+        // todo: 可以考虑其他缓存策略，比如redis
+        // todo: 考虑项目启动初始化
         if (usernameRoleNamesMap == null) {
-            usernameRoleNamesMap = sbracAuthContext.listUserRole().stream().collect(Collectors.toMap(SbracUserRole::getUsername, SbracUserRole::getRoleNames));
-            request.getSession().setAttribute(SBRAC_USERNAME_ROLE_NAMES_MAP_CACHE_KEY, usernameRoleNamesMap);
+            synchronized (this) {
+                if (usernameRoleNamesMap == null) {
+                    usernameRoleNamesMap = sbracAuthContext.listUserRole().stream()
+                            .collect(Collectors.toMap(SbracUserRole::getUsername, SbracUserRole::getRoleNames));
+                }
+            }
         }
         return usernameRoleNamesMap;
     }
 
     /**
      * 获取{@code map {http url + "$" + http method: role names}}。先从session中获取，获取不到去调用sbracAuthContext中的方法
-     * todo: 缓存到内存还是其他地方
      *
-     * @param request request
      * @return {@code map {http url + "$" + http method: role names}}
      */
     @NotNull
-    private Map<String, List<String>> getRequestRoleNamesMap(HttpServletRequest request) {
-        Map<String, List<String>> requestRoleNamesMap = (Map<String, List<String>>) request.getSession()
-                .getAttribute(SBRAC_REQUEST_ROLE_NAMES_MAP_CACHE_KEY);
+    private Map<String, List<String>> getCachedRequestRoleNamesMap() {
         if (requestRoleNamesMap == null) {
-            requestRoleNamesMap = sbracAuthContext.listRequestRoles().stream().collect(Collectors.toMap(
-                    rr -> this.getJoinedHttpUrlAndMethod(rr.getRequestUrl(), rr.getRequestMethod()),
-                    SbracRequestRole::getRoleNames));
-            request.getSession().setAttribute(SBRAC_REQUEST_ROLE_NAMES_MAP_CACHE_KEY, requestRoleNamesMap);
+            synchronized (this) {
+                if (requestRoleNamesMap == null) {
+                    requestRoleNamesMap = sbracAuthContext.listRequestRoles().stream().collect(Collectors.toMap(
+                            rr -> this.getJoinedHttpUrlAndMethod(rr.getRequestUrl(), rr.getRequestMethod()),
+                            SbracRequestRole::getRoleNames));
+                }
+            }
         }
         return requestRoleNamesMap;
     }
